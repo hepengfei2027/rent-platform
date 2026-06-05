@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.ProductDao">
+
+    <resultMap id="ProductResultMap" type="com.model.Product">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="price" column="price" />
+        <result property="stock" column="stock" />
+        <result property="description" column="description" />
+        <result property="category" column="category" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="status" column="status" />
+        <!-- 条件映射：如果字段存在就映射 -->
+        <result property="ownerId" column="owner_id" />
+        <result property="ownerName" column="owner_name" />
+        <result property="rentPrice" column="rent_price" />
+        <result property="productType" column="product_type" />
+
+        <result property="deposit" column="deposit"/>  <!-- 添加押金映射 -->
+
+    </resultMap>
+
+    <!-- 基础查询方法 -->
+    <select id="findAll" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE status = 1 ORDER BY create_time DESC
+    </select>
+
+    <select id="findById" parameterType="int" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE id = #{id}
+    </select>
+
+    <select id="findByName" parameterType="string" resultMap="ProductResultMap">
+        SELECT * FROM product
+        WHERE name LIKE CONCAT('%', #{name}, '%') AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入商品（包含押金字段） -->
+    <insert id="insert" parameterType="com.model.Product" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (
+            name, category, price, rent_price, product_type,deposit, stock,
+            description, status, owner_id, owner_name, create_time
+        ) VALUES (
+                     #{name}, #{category}, #{price}, #{rentPrice},#{productType}, #{deposit}, #{stock},
+                     #{description}, #{status}, #{ownerId}, #{ownerName}, NOW()
+                 )
+    </insert>
+
+
+    <select id="selectProductsByStatus" parameterType="int" resultType="com.model.Product">
+        SELECT * FROM product WHERE status = #{status}
+    </select>
+
+    <!-- 更新商品（包含押金字段） -->
+    <update id="update" parameterType="com.model.Product">
+        UPDATE product
+        SET name = #{name},
+        category = #{category},
+        price = #{price},
+        rent_price = #{rentPrice},
+        product_type = #{productType},
+        deposit = #{deposit},  <!-- 更新押金 -->
+        stock = #{stock},
+        description = #{description},
+        status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除商品 -->
+    <update id="delete" parameterType="int">
+        UPDATE product SET status = 0 WHERE id = #{id}
+    </update>
+
+    <!-- 更新库存 -->
+    <update id="updateStock">
+        UPDATE product SET stock = #{stock}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 购买商品（简化版，先实现基本功能） -->
+    <update id="buyProduct">
+        UPDATE product
+        SET stock = stock - 1,
+            update_time = NOW()
+        WHERE id = #{productId} AND status = 1 AND stock > 0
+    </update>
+
+    <!-- ProductDao.xml -->
+    <select id="findByCategoryAndStatus" resultMap="ProductResultMap">
+        SELECT * FROM product
+        WHERE category = #{category} AND status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+
+    <!-- 查询上架商品 -->
+    <select id="findOnSaleProducts" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE status = 1 ORDER BY create_time DESC
+    </select>
+
+    <!-- 原子更新方法 -->
+    <update id="updateStatusAndStockAndOwner">
+        UPDATE product
+        SET status = #{status},
+            stock = #{stock},
+            owner_id = #{ownerId},
+            owner_name = #{ownerName},
+            update_time = NOW()
+        WHERE id = #{id} AND status = 1
+    </update>
+
+
+    <!-- 根据所有者查询商品 -->
+    <select id="findByOwnerId" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE owner_id = #{ownerId} ORDER BY create_time DESC
+    </select>
+
+
+    <!-- 统计所有商品的分类数量（包含所有状态） -->
+    <select id="countProductsByCategory" resultType="map">
+        SELECT category, COUNT(*) as count
+        FROM product
+        GROUP BY category
+        ORDER BY count DESC
+    </select>
+
+
+</mapper>

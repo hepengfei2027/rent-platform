@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.ReviewDao">
+
+    <resultMap id="ReviewResultMap" type="com.model.Review">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="reviewerId" column="reviewer_id"/>
+        <result property="reviewerName" column="reviewer_name"/>
+        <result property="targetUserId" column="target_user_id"/>
+        <result property="targetUserName" column="target_user_name"/>
+        <result property="rating" column="rating"/>
+        <result property="content" column="content"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.model.Review" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review (order_id, reviewer_id, reviewer_name, target_user_id,
+                            target_user_name, rating, content, type, create_time)
+        VALUES (#{orderId}, #{reviewerId}, #{reviewerName}, #{targetUserId},
+                #{targetUserName}, #{rating}, #{content}, #{type}, NOW())
+    </insert>
+
+    <select id="findByOrderId" parameterType="int" resultMap="ReviewResultMap">
+        SELECT * FROM review WHERE order_id = #{orderId} ORDER BY create_time DESC
+    </select>
+
+    <select id="findByTargetUserId" parameterType="int" resultMap="ReviewResultMap">
+        SELECT * FROM review WHERE target_user_id = #{targetUserId} ORDER BY create_time DESC
+    </select>
+
+    <select id="findByReviewerId" parameterType="int" resultMap="ReviewResultMap">
+        SELECT * FROM review WHERE reviewer_id = #{reviewerId} ORDER BY create_time DESC
+    </select>
+
+    <select id="getAverageRatingByUserId" parameterType="int" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM review WHERE target_user_id = #{userId}
+    </select>
+
+    <select id="getReviewCountByUserId" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM review WHERE target_user_id = #{userId}
+    </select>
+</mapper>
